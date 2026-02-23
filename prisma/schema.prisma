@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id           String          @id @default(cuid())
+  email        String          @unique
+  passwordHash String
+  name         String?
+  gender       String?
+  college      String?
+  degree       String?
+  branch       String?
+  cgpa         Float?
+  // Personal
+  contactNumber    String?
+  emailId          String?
+  age              Int?
+  location         String?
+  source           String?
+  readyToRelocate  String?
+  // Family
+  fatherName   String?
+  motherName   String?
+  brotherName  String?
+  sisterName   String?
+  spouseName   String?
+  childrenName String?
+  // Education
+  graduation             String?
+  engineering            String?
+  masters                String?
+  pgDiploma              String?
+  additionalQualifications String?
+  // Professional (prior work experience)
+  presentOrganization   String?
+  designation           String?
+  currentJobDetails     String?
+  teamSizeHandled       String?
+  reportingTo           String?
+  currentMonthlyCTC    String?
+  currentAnnualCTC     String?
+  expectedMonthlyCTC   String?
+  expectedAnnualCTC    String?
+  totalExperience      String?
+  noticePeriod         String?
+  reasonsForChange     String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  profiles     StudentProfile[]
+  examSessions ExamSession[]
+}
+
+model StudentProfile {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  name      String?
+  gender    String?
+  college   String?
+  degree    String?
+  branch    String?
+  cgpa      Float?
+  roleIds   String // JSON array of role IDs
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Role {
+  id                String             @id @default(cuid())
+  name              String
+  description       String?
+  isActive          Boolean            @default(true)
+  theoryQuestions   TheoryQuestion[]
+  practicalQuestions PracticalQuestion[]
+  examQuestions     ExamQuestion[]
+}
+
+model TheoryQuestion {
+  id           String   @id @default(cuid())
+  roleId       String
+  role         Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  questionText String
+  isActive     Boolean  @default(true)
+}
+
+model PracticalQuestion {
+  id           String   @id @default(cuid())
+  roleId       String
+  role         Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  questionText String
+  isActive     Boolean  @default(true)
+}
+
+model ExamSession {
+  id                String       @id @default(cuid())
+  studentId         String
+  student           Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  roleIds           String // JSON array of role IDs
+  phase             String       @default("theory") // theory | practical
+  startTime         DateTime
+  endTime           DateTime
+  submittedAt       DateTime?
+  totalTabSwitches    Int          @default(0)
+  totalTimeAway       Int          @default(0) // seconds
+  theoryTabViolation  Boolean      @default(false)
+  terminationReason   String?
+  terminatedAt        DateTime?
+  totalScore          Int?
+  evaluationStatus  String       @default("pending") // pending | evaluated
+  evaluatedAt       DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  examQuestions     ExamQuestion[]
+  answers           Answer[]
+  examLogs          ExamLog[]
+  practicalFiles    PracticalFile[]
+}
+
+model ExamQuestion {
+  id            String       @id @default(cuid())
+  sessionId     String
+  session       ExamSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  roleId        String
+  role          Role         @relation(fields: [roleId], references: [id])
+  section       String // theory | practical
+  questionType  String // theory | practical
+  questionText  String // snapshot at generation
+  sourceId      String? // original question ID for usage tracking
+  orderIndex    Int
+  createdAt     DateTime     @default(now())
+  answers       Answer[]
+}
+
+model Answer {
+  id              String       @id @default(cuid())
+  sessionId       String
+  session         ExamSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  examQuestionId  String
+  examQuestion    ExamQuestion @relation(fields: [examQuestionId], references: [id], onDelete: Cascade)
+  @@unique([sessionId, examQuestionId])
+  answerText      String?
+  firstOpened     DateTime?
+  firstTyped      DateTime?
+  lastModified    DateTime?
+  totalTimeSpent   Int          @default(0) // seconds (legacy)
+  scoreAwarded     Int?
+  tabSwitchCount   Int          @default(0)
+  tabSwitchTime    Int          @default(0) // seconds (legacy)
+  openedAt         DateTime?
+  lastOpenedAt     DateTime?
+  closedAt         DateTime?
+  activeTimeMs     Int          @default(0)
+  tabSwitchTimeMs  Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model ExamLog {
+  id              String       @id @default(cuid())
+  sessionId       String
+  session         ExamSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  eventType       String
+  timestamp       DateTime
+  duration        Int?
+  durationAway    Int? // milliseconds
+  metadata        String?
+  examQuestionId  String? // question when event occurred
+  createdAt       DateTime     @default(now())
+}
+
+model PracticalFile {
+  id          Int         @id @default(autoincrement())
+  sessionId   String
+  questionId  String
+  filename    String
+  storedPath  String
+  mimeType    String?
+  sizeBytes   Int
+  uploadedAt  DateTime     @default(now())
+
+  session     ExamSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
