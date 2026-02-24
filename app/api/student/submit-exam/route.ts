@@ -1,7 +1,15 @@
 import { getStudentSession } from "@/lib/auth";
 import { submitExam } from "@/lib/examSessionManager";
+import { checkSubmitRateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
+  const rate = checkSubmitRateLimit(request);
+  if (!rate.ok) {
+    return Response.json(
+      { error: "Too many submissions. Try again later." },
+      { status: 429, headers: rate.retryAfter ? { "Retry-After": String(rate.retryAfter) } : undefined }
+    );
+  }
   const session = await getStudentSession();
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const { db } = await import("@/lib/db");

@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getStudentSession } from "@/lib/auth";
+import { R2_ENABLED } from "@/lib/r2";
 import fs from "fs";
 import path from "path";
 
 const ALLOWED_EXT = new Set(["zip", "stl", "glb", "obj", "pdf"]);
-const MAX_SIZE = 10 * 1024 * 1024 * 1024; // 10GB
+const MAX_SIZE = 10 * 1024 * 1024 * 1024; // 10GB (local dev only; production uses R2 + MAX_UPLOAD_BYTES)
 const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads");
 
 function sanitizeFilename(name: string): string {
@@ -13,6 +14,12 @@ function sanitizeFilename(name: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  if (R2_ENABLED) {
+    return Response.json(
+      { error: "Direct upload disabled; use presigned upload flow" },
+      { status: 400 }
+    );
+  }
   const session = await getStudentSession();
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   try {

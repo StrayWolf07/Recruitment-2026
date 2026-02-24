@@ -25,6 +25,9 @@ interface SessionData {
   answers: Record<string, { answerText?: string; firstOpened?: string; firstTyped?: string; lastModified?: string; totalTimeSpent: number }>;
 }
 
+const ALLOWED_EXT = ["zip", "stl", "glb", "obj", "pdf"];
+const MAX_SIZE_DEV = 10 * 1024 * 1024 * 1024; // 10GB for local dev
+
 function PracticalUploadPanel({
   sessionId,
   questionId,
@@ -41,34 +44,105 @@ function PracticalUploadPanel({
   disabled: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   const handleSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || disabled) return;
     const ext = (file.name.split(".").pop() ?? "").toLowerCase();
-    if (!["zip", "stl", "glb", "obj", "pdf"].includes(ext)) {
+    if (!ALLOWED_EXT.includes(ext)) {
       alert("Allowed: zip, stl, glb, obj, pdf");
+      e.target.value = "";
       return;
     }
-    if (file.size > 10 * 1024 * 1024 * 1024) {
-      alert("Max 10GB");
+    const maxSize = MAX_SIZE_DEV;
+    if (file.size > maxSize) {
+      alert(`Max ${Math.round(maxSize / 1024 / 1024)}MB per file`);
+      e.target.value = "";
       return;
     }
-    const fd = new FormData();
-    fd.set("sessionId", sessionId);
-    fd.set("questionId", questionId);
-    fd.set("file", file);
-    const res = await fetch("/api/student/upload-practical-file", { method: "POST", body: fd });
-    if (res.ok) {
-      onUpload();
-    } else {
-      const err = await res.json().catch(() => ({}));
-      alert(err.error ?? "Upload failed");
+    setUploading(true);
+    setUploadProgress(0);
+    setUploadError(null);
+    try {
+      const presignRes = await fetch("/api/uploads/presign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          questionId,
+          filename: file.name,
+          contentType: file.type || "application/octet-stream",
+        }),
+      });
+      if (presignRes.ok) {
+        const { url, key, maxSize: presignMax } = await presignRes.json();
+        const maxBytes = typeof presignMax === "number" ? presignMax : maxSize;
+        if (file.size > maxBytes) {
+          setUploadError(`File too large (max ${Math.round(maxBytes / 1024 / 1024)}MB)`);
+          setUploading(false);
+          setUploadProgress(null);
+          e.target.value = "";
+          return;
+        }
+        const xhr = new XMLHttpRequest();
+        await new Promise<void>((resolve, reject) => {
+          xhr.upload.addEventListener("progress", (ev) => {
+            if (ev.lengthComputable) setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
+          });
+          xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) resolve();
+            else reject(new Error(`Upload failed: ${xhr.status}`));
+          });
+          xhr.addEventListener("error", () => reject(new Error("Network error")));
+          xhr.open("PUT", url);
+          xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+          xhr.send(file);
+        });
+        const registerRes = await fetch("/api/student/register-practical-file", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId,
+            questionId,
+            key,
+            filename: file.name,
+            sizeBytes: file.size,
+          }),
+        });
+        if (!registerRes.ok) {
+          const err = await registerRes.json().catch(() => ({}));
+          throw new Error(err.error ?? "Failed to register file");
+        }
+        onUpload();
+      } else if (presignRes.status === 503) {
+        const fd = new FormData();
+        fd.set("sessionId", sessionId);
+        fd.set("questionId", questionId);
+        fd.set("file", file);
+        const res = await fetch("/api/student/upload-practical-file", { method: "POST", body: fd });
+        if (res.ok) onUpload();
+        else {
+          const err = await res.json().catch(() => ({}));
+          setUploadError(err.error ?? "Upload failed");
+        }
+      } else {
+        const err = await presignRes.json().catch(() => ({}));
+        setUploadError(err.error ?? "Upload failed");
+      }
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+      setUploadProgress(null);
+      e.target.value = "";
     }
-    e.target.value = "";
   };
   return (
     <GlassCard className="mt-4 p-4">
-      <p className="text-white/80 text-sm mb-2">Upload files (zip, stl, glb, obj, pdf — max 10GB per file)</p>
+      <p className="text-white/80 text-sm mb-2">Upload files (zip, stl, glb, obj, pdf). Max size may apply in production.</p>
       <input
         ref={inputRef}
         type="file"
@@ -76,9 +150,15 @@ function PracticalUploadPanel({
         onChange={handleSelect}
         className="hidden"
       />
-      <NeonButton variant="secondary" onClick={() => inputRef.current?.click()} disabled={disabled}>
-        Choose File
+      <NeonButton variant="secondary" onClick={() => inputRef.current?.click()} disabled={disabled || uploading}>
+        {uploading ? "Uploading…" : "Choose File"}
       </NeonButton>
+      {uploadProgress != null && (
+        <div className="mt-2 h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+          <div className="h-full bg-neonBlue transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+        </div>
+      )}
+      {uploadError && <p className="mt-2 text-red-400 text-sm">{uploadError}</p>}
       {files.length > 0 && (
         <ul className="mt-3 space-y-2">
           {files.map((f) => (

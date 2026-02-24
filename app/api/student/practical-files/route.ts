@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getStudentSession } from "@/lib/auth";
+import { R2_ENABLED } from "@/lib/r2";
 import fs from "fs";
 import path from "path";
 
@@ -54,8 +55,10 @@ export async function DELETE(request: NextRequest) {
       return Response.json({ error: "Exam already submitted" }, { status: 400 });
     }
 
-    const fullPath = path.join(UPLOADS_DIR, file.storedPath);
-    if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+    if (!R2_ENABLED) {
+      const fullPath = path.join(UPLOADS_DIR, file.storedPath);
+      if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+    }
     await db.practicalFile.delete({ where: { id: fileId } });
     return Response.json({ ok: true });
   } catch (e) {

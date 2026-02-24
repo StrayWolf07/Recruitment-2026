@@ -1,82 +1,113 @@
 # Recruitment Exam Web Application
 
-Full-stack recruitment exam system with student signup/login, profile, dynamic exam generation, timed exams, tab-switch tracking, and admin dashboard.
-
-## How to Run
-
-### Transfer / Use existing database (no migrations)
-
-On a fresh system with the project and existing `prisma/dev.db` copied over:
-
-```bash
-npm install
-npx prisma generate
-npm run dev
-```
-
-The server will start using the existing database without altering it. Do **not** run `prisma migrate dev`, `prisma db push`, or `prisma migrate reset`.
-
-**Database location:** The active SQLite file is at `prisma/dev.db`. Ensure `DATABASE_URL="file:./dev.db"` in `.env` (path is relative to the Prisma schema).
+Full-stack recruitment exam system with student signup/login, profile, dynamic exam generation, timed exams, tab-switch tracking, and admin dashboard. Supports **PostgreSQL** in production, **SQLite** for local dev, and **Cloudflare R2** for scalable file uploads.
 
 ---
 
-### First-time setup (new database)
+## Environment Variables
 
-### 1. Install dependencies
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes | **Production:** `postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public` (e.g. Railway Postgres, Neon). **Local dev (SQLite):** `file:./dev.db` |
+| `ADMIN_USER` | No | Fallback admin login email/username if Admin table has no match |
+| `ADMIN_PASS` | No | Fallback admin password |
+| `SESSION_SECRET` | Yes | Secret for signing session cookies (change in production) |
+| `R2_ACCOUNT_ID` | For R2 | Cloudflare account ID (optional if `R2_ENDPOINT` set) |
+| `R2_ACCESS_KEY_ID` | For R2 | R2 S3-compatible access key |
+| `R2_SECRET_ACCESS_KEY` | For R2 | R2 S3-compatible secret key |
+| `R2_BUCKET` | For R2 | Bucket name for uploads |
+| `R2_ENDPOINT` | For R2 | S3 API endpoint (e.g. `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`) |
+| `R2_PUBLIC_BASE_URL` | For R2 | Public URL for download links (custom domain or R2 dev URL) |
+| `MAX_UPLOAD_BYTES` | No | Max file size in bytes (default 50MB) |
+| `APP_BASE_URL` | No | Optional base URL of the app (e.g. for emails/redirects) |
 
-```bash
-npm install
-```
+---
 
-### 2. Configure environment
+## How to Run
 
-Copy `.env.example` to `.env`:
+### Local development (SQLite)
 
-```bash
-cp .env.example .env
-```
+1. **Install and generate Prisma client for SQLite:**
 
-Edit `.env` if needed. Default values work for local development:
+   ```bash
+   npm install
+   npm run db:generate:dev
+   ```
 
-- `DATABASE_URL="file:./dev.db"` — SQLite at `prisma/dev.db` (no extra setup)
-- `ADMIN_USER="admin"` — Admin login username
-- `ADMIN_PASS="admin123"` — Admin login password
-- `SESSION_SECRET` — Used for signing session cookies (change in production)
+2. **Configure `.env`:** Copy `.env.example` to `.env` and set `DATABASE_URL="file:./dev.db"`.
 
-### 3. Initialize database (new setup only)
+3. **Create DB (first time):** `npx prisma db push --schema=prisma/schema.sqlite.prisma`
 
-For fresh setup only (creates new tables):
+4. **Start dev server:**
 
-```bash
-npm run prisma:migrate
-```
+   ```bash
+   npm run dev
+   ```
 
-Or use `npx prisma db push` for schema sync. **Do not run these when using an existing database.**
+   Open [http://localhost:3000](http://localhost:3000). Uploads are stored in `public/uploads/`.
 
-### 4. Start development server
+### Production (PostgreSQL + R2)
 
-```bash
-npm run dev
-```
+- Use **PostgreSQL** for the database and **Cloudflare R2** for file uploads (presigned URLs).
+- Set all required env vars (see table above). Run migrations before first start (see Railway steps below).
 
-Open [http://localhost:3000](http://localhost:3000).
+---
 
-**Access via IP (same network):** The dev/production server binds to `0.0.0.0`, so you can also open `http://YOUR_IP:3000` (e.g. `http://192.168.1.5:3000`) from other devices on your network. Find your IP: `ipconfig` (Windows) or `ifconfig` (Mac/Linux).
+## Railway Deployment
 
-### 5. Build for production
+1. **Create a project** on [Railway](https://railway.app). Add a **PostgreSQL** plugin (or use an external Postgres and add its URL).
 
-```bash
-npm run build
-npm start
-```
+2. **Connect your repo** and configure the service:
+
+   - **Build command:** `npm install && npm run db:generate && npm run build`
+   - **Start command:** `npm run db:migrate:deploy && npm start`
+   - **Root directory:** (leave default if app is at repo root)
+
+3. **Environment variables** (Settings → Variables):
+
+   - `DATABASE_URL` — from Railway Postgres (or your own Postgres URL)
+   - `SESSION_SECRET` — generate a long random string
+   - `ADMIN_USER` / `ADMIN_PASS` — admin fallback login
+   - For file uploads: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ENDPOINT`, `R2_PUBLIC_BASE_URL`
+   - Optional: `MAX_UPLOAD_BYTES`, `APP_BASE_URL`
+
+4. **Migrations:** The start command runs `npm run db:migrate:deploy` before `npm start`, so the database is migrated on each deploy. For a one-off migration you can run in Railway shell: `npx prisma migrate deploy`.
+
+5. **Health check:** Configure Railway to call `GET /health`. The app responds with `{ status: "ok", db: "connected" }` when the DB is reachable.
+
+6. **Deploy.** The app will build, run migrations, and start with `npm start` (production server).
+
+---
+
+## Data migration (SQLite → Postgres)
+
+To copy existing data from a local SQLite DB to Postgres (e.g. before going live):
+
+1. Ensure **Postgres** is empty and migrations are applied: `DATABASE_URL=postgresql://... npm run db:migrate:deploy`
+2. Ensure **SQLite** file exists at `prisma/dev.db` with your data.
+3. Generate Postgres client and run the script:
+
+   ```bash
+   npm run db:generate
+   npx tsx scripts/migrate_sqlite_to_postgres.ts
+   ```
+
+   Set `DATABASE_URL` to your Postgres URL. The script is **idempotent**: it skips tables that already have rows, so safe to re-run if it fails partway.
+
+---
 
 ## Scripts
 
-- `npm run dev` — Start dev server
-- `npm run build` — Build for production
-- `npm start` — Start production server
-- `npm run prisma:generate` — Generate Prisma client
-- `npm run prisma:migrate` — Run database migrations
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start dev server (localhost) |
+| `npm run build` | Build for production |
+| `npm start` | Start production server |
+| `npm run db:generate` | Generate Prisma client (Postgres schema) |
+| `npm run db:generate:dev` | Generate Prisma client for SQLite (local dev) |
+| `npm run db:migrate:deploy` | Apply migrations (production; use on deploy) |
+| `npm run db:migrate` | Run migrations in dev (interactive) |
+| `npm run db:push` | Push schema without migrations (dev only) |
 
 ## Default Admin Login
 

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
+import { getPublicUrl } from "@/lib/r2";
 
 export async function GET(request: NextRequest) {
   const ok = await getAdminSession();
@@ -108,7 +109,13 @@ export async function GET(request: NextRequest) {
     questions: session.examQuestions.map((q) => {
       const files = session.practicalFiles
         .filter((f) => f.questionId === q.id)
-        .map((f) => ({ id: f.id, filename: f.filename, storedPath: f.storedPath, sizeBytes: f.sizeBytes }));
+        .map((f) => ({
+          id: f.id,
+          filename: f.filename,
+          storedPath: f.storedPath,
+          sizeBytes: f.sizeBytes,
+          downloadUrl: getPublicUrl(f.storedPath) || `/uploads/${f.storedPath}`,
+        }));
       return { id: q.id, questionText: q.questionText, section: q.section, answer: answersMap[q.id], files };
     }),
   });

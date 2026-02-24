@@ -1,8 +1,16 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { verifyPassword, createStudentSession } from "@/lib/auth";
+import { checkAuthRateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: NextRequest) {
+  const rate = checkAuthRateLimit(request);
+  if (!rate.ok) {
+    return Response.json(
+      { error: "Too many attempts. Try again later." },
+      { status: 429, headers: rate.retryAfter ? { "Retry-After": String(rate.retryAfter) } : undefined }
+    );
+  }
   try {
     const body = await request.json();
     const { email, password } = body;

@@ -72,7 +72,7 @@ export default function AdminEvaluatePage() {
       id: string;
       questionText: string;
       section: string;
-      files?: { id: number; filename: string; storedPath: string; sizeBytes: number }[];
+      files?: { id: number; filename: string; storedPath: string; sizeBytes: number; downloadUrl?: string }[];
       answer?: {
         id: string;
         answerText?: string | null;
@@ -260,7 +260,7 @@ export default function AdminEvaluatePage() {
                 <ul className="mt-2 space-y-1">
                   {q.files.map((f) => (
                     <li key={f.id}>
-                      <a href={`/uploads/${f.storedPath}`} target="_blank" rel="noopener noreferrer" className="text-neonBlue hover:text-neonBlue/80 text-sm">
+                      <a href={f.downloadUrl ?? `/uploads/${f.storedPath}`} target="_blank" rel="noopener noreferrer" className="text-neonBlue hover:text-neonBlue/80 text-sm">
                         {f.filename} ({Math.round(f.sizeBytes / 1024)} KB)
                       </a>
                     </li>
