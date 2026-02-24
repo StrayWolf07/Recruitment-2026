@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 import { generateAnswersPDF } from "@/lib/pdfGenerator";
 
+export const runtime = "nodejs";
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
@@ -46,9 +48,11 @@ export async function GET(
     });
 
     const filename = `answers_${sessionId}.pdf`;
-    return new Response(pdfBytes, {
+    const body = Buffer.from(pdfBytes);
+    return new Response(body, {
       headers: {
         "Content-Type": "application/pdf",
+        "Cache-Control": "no-store",
         "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });

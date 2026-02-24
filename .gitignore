@@ -35,7 +35,7 @@ yarn-error.log*
 prisma/*.db
 prisma/*.db-journal
 
-# generated pdfs
-public/submissions/*.pdf
+# generated pdfs and uploads (no local filesystem in production)
+public/submissions
 public/uploads
 backup.sql
