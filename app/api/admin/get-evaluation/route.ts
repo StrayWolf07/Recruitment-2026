@@ -3,6 +3,11 @@ import { db } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 import { getPublicUrl } from "@/lib/r2";
 
+function getFileStoreDownloadUrl(storedPath: string): string {
+  const base = process.env.NEXT_PUBLIC_FILE_STORE_BASE_URL?.replace(/\/$/, "");
+  return base ? `${base}/f/${storedPath}` : "";
+}
+
 export async function GET(request: NextRequest) {
   const ok = await getAdminSession();
   if (!ok) return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -107,7 +112,7 @@ export async function GET(request: NextRequest) {
           filename: f.filename,
           storedPath: f.storedPath,
           sizeBytes: f.sizeBytes,
-          downloadUrl: getPublicUrl(f.storedPath) || `/uploads/${f.storedPath}`,
+          downloadUrl: getFileStoreDownloadUrl(f.storedPath) || getPublicUrl(f.storedPath) || `/uploads/${f.storedPath}`,
         }));
       return { id: q.id, questionText: q.questionText, section: q.section, answer: answersMap[q.id], files };
     }),

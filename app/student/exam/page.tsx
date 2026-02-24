@@ -63,75 +63,62 @@ function PracticalUploadPanel({
       e.target.value = "";
       return;
     }
+    const baseUrl = process.env.NEXT_PUBLIC_FILE_STORE_BASE_URL?.replace(/\/$/, "");
+    const uploadToken = process.env.NEXT_PUBLIC_FILE_STORE_UPLOAD_TOKEN;
+    if (!baseUrl || !uploadToken) {
+      setUploadError("Upload not configured");
+      e.target.value = "";
+      return;
+    }
     setUploading(true);
     setUploadProgress(0);
     setUploadError(null);
     try {
-      const presignRes = await fetch("/api/uploads/presign", {
+      const formData = new FormData();
+      formData.set("file", file);
+      const xhr = new XMLHttpRequest();
+      const uploadUrl = `${baseUrl}/upload`;
+      await new Promise<void>((resolve, reject) => {
+        xhr.upload.addEventListener("progress", (ev) => {
+          if (ev.lengthComputable) setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
+        });
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`Upload failed: ${xhr.status}`));
+        });
+        xhr.addEventListener("error", () => reject(new Error("Network error")));
+        xhr.open("POST", uploadUrl);
+        xhr.setRequestHeader("x-upload-token", uploadToken);
+        xhr.send(formData);
+      });
+      let filename: string;
+      try {
+        const json = JSON.parse(xhr.responseText) as { ok?: boolean; filename?: string };
+        filename = json.filename ?? "";
+      } catch {
+        setUploadError("Invalid response from file store");
+        return;
+      }
+      if (!filename) {
+        setUploadError("File store did not return filename");
+        return;
+      }
+      const res = await fetch("/api/student/upload-practical-file", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
           questionId,
+          storedPath: filename,
           filename: file.name,
-          contentType: file.type || "application/octet-stream",
+          sizeBytes: file.size,
         }),
       });
-      if (presignRes.ok) {
-        const { url, key, maxSize: presignMax } = await presignRes.json();
-        const maxBytes = typeof presignMax === "number" ? presignMax : maxSize;
-        if (file.size > maxBytes) {
-          setUploadError(`File too large (max ${Math.round(maxBytes / 1024 / 1024)}MB)`);
-          setUploading(false);
-          setUploadProgress(null);
-          e.target.value = "";
-          return;
-        }
-        const xhr = new XMLHttpRequest();
-        await new Promise<void>((resolve, reject) => {
-          xhr.upload.addEventListener("progress", (ev) => {
-            if (ev.lengthComputable) setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
-          });
-          xhr.addEventListener("load", () => {
-            if (xhr.status >= 200 && xhr.status < 300) resolve();
-            else reject(new Error(`Upload failed: ${xhr.status}`));
-          });
-          xhr.addEventListener("error", () => reject(new Error("Network error")));
-          xhr.open("PUT", url);
-          xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-          xhr.send(file);
-        });
-        const registerRes = await fetch("/api/student/register-practical-file", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId,
-            questionId,
-            key,
-            filename: file.name,
-            sizeBytes: file.size,
-          }),
-        });
-        if (!registerRes.ok) {
-          const err = await registerRes.json().catch(() => ({}));
-          throw new Error(err.error ?? "Failed to register file");
-        }
-        onUpload();
-      } else if (presignRes.status === 503) {
-        const fd = new FormData();
-        fd.set("sessionId", sessionId);
-        fd.set("questionId", questionId);
-        fd.set("file", file);
-        const res = await fetch("/api/student/upload-practical-file", { method: "POST", body: fd });
-        if (res.ok) onUpload();
-        else {
-          const err = await res.json().catch(() => ({}));
-          setUploadError(err.error ?? "Upload failed");
-        }
-      } else {
-        const err = await presignRes.json().catch(() => ({}));
-        setUploadError(err.error ?? "Upload failed");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? "Failed to register file");
       }
+      onUpload();
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Upload failed");
     } finally {
