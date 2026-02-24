@@ -73,6 +73,12 @@ Full-stack recruitment exam system with student signup/login, profile, dynamic e
 
 4. **Migrations:** The start command runs `npm run db:migrate:deploy` before `npm start`, so the database is migrated on each deploy. For a one-off migration you can run in Railway shell: `npx prisma migrate deploy`.
 
+   **Restore table structure after a DB reset:** If you wiped the production database and need the tables back (empty), run:
+   ```bash
+   DATABASE_URL="postgresql://..." npx prisma migrate deploy
+   ```
+   This recreates all tables (Role, TheoryQuestion, PracticalQuestion, ExamSession, ExamQuestion, Answer, ExamLog, PracticalFile, Student, StudentProfile, Admin). Then run `npx prisma db seed` to add minimal data (1 role, 1 admin) if needed.
+
 5. **Health check:** Configure Railway to call `GET /health`. The app responds with `{ status: "ok", db: "connected" }` when the DB is reachable.
 
 6. **Deploy.** The app will build, run migrations, and start with `npm start` (production server).
