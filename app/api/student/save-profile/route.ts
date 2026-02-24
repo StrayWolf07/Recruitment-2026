@@ -143,6 +143,16 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Invalid role selection" }, { status: 400 });
     }
 
+    const student = await db.student.findUnique({
+      where: { id: session.studentId },
+    });
+    if (!student) {
+      return Response.json(
+        { error: "Session expired or account not found. Please sign in again." },
+        { status: 401 }
+      );
+    }
+
     const profileData = {
       studentId: session.studentId,
       name: name.trim(),
@@ -153,8 +163,6 @@ export async function POST(request: NextRequest) {
       cgpa: cgpaNum,
       roleIds: JSON.stringify(roleIds),
     };
-
-    await db.studentProfile.create({ data: profileData });
 
     const trim = (v: unknown) => (typeof v === "string" ? v.trim() : v == null ? "" : String(v));
     const studentUpdate: Record<string, unknown> = {
@@ -195,13 +203,24 @@ export async function POST(request: NextRequest) {
       reasonsForChange: trim(reasonsForChange),
     };
 
-    await db.student.update({
-      where: { id: session.studentId },
-      data: studentUpdate as Parameters<typeof db.student.update>[0]["data"],
-    });
+    await db.$transaction([
+      db.studentProfile.create({ data: profileData }),
+      db.student.update({
+        where: { id: session.studentId },
+        data: studentUpdate as Parameters<typeof db.student.update>[0]["data"],
+      }),
+    ]);
     return Response.json({ success: true });
   } catch (e) {
-    console.error(e);
+    const message = e instanceof Error ? e.message : String(e);
+    const code = e && typeof e === "object" && "code" in e ? (e as { code: string }).code : undefined;
+    console.error("Save profile error:", message, code ?? "", e);
+    if (code === "P2025") {
+      return Response.json(
+        { error: "Session expired or account not found. Please sign in again." },
+        { status: 401 }
+      );
+    }
     return Response.json({ error: "Save profile failed" }, { status: 500 });
   }
 }
