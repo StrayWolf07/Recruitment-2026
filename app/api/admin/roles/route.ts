@@ -5,8 +5,13 @@ import { getAdminSession } from "@/lib/auth";
 export async function GET() {
   const ok = await getAdminSession();
   if (!ok) return Response.json({ error: "Unauthorized" }, { status: 401 });
-  const roles = await db.role.findMany({ orderBy: { name: "asc" } });
-  return Response.json(roles);
+  try {
+    const roles = await db.role.findMany({ orderBy: { name: "asc" } });
+    return Response.json(roles);
+  } catch (err) {
+    console.error("Roles fetch error:", err);
+    return Response.json([], { status: 200 });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -26,7 +31,7 @@ export async function POST(request: NextRequest) {
     });
     return Response.json(role);
   } catch (e) {
-    console.error(e);
+    console.error("Create role error:", e);
     return Response.json({ error: "Create role failed" }, { status: 500 });
   }
 }

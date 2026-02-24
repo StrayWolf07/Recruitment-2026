@@ -2,6 +2,9 @@
   "name": "exam-web",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,7 +16,8 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
-    "db:generate:dev": "prisma generate --schema=prisma/schema.sqlite.prisma"
+    "db:generate:dev": "prisma generate --schema=prisma/schema.sqlite.prisma",
+    "clear:submissions": "tsx scripts/clear_submissions.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.700.0",
