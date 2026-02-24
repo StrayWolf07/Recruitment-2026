@@ -3,9 +3,13 @@ import { db } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 import { getPublicUrl } from "@/lib/r2";
 
-function getFileStoreDownloadUrl(storedPath: string): string {
-  const base = process.env.NEXT_PUBLIC_FILE_STORE_BASE_URL?.replace(/\/$/, "");
-  return base ? `${base}/f/${storedPath}` : "";
+function getFileStoreDownloadUrl(storedPath: string): string | null {
+  const rawBase = process.env.NEXT_PUBLIC_FILE_STORE_BASE_URL;
+  if (!rawBase) return null;
+  const base = rawBase.trim().replace(/\/$/, "");
+  const path = String(storedPath ?? "").trim();
+  if (!path) return null;
+  return `${base}/f/${path}`;
 }
 
 export async function GET(request: NextRequest) {
