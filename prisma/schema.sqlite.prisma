@@ -112,8 +112,6 @@ model ExamSession {
   startTime         DateTime
   endTime           DateTime
   submittedAt       DateTime?
-  totalTabSwitches    Int          @default(0)
-  totalTimeAway       Int          @default(0)
   theoryTabViolation  Boolean      @default(false)
   terminationReason   String?
   terminatedAt        DateTime?
@@ -156,13 +154,10 @@ model Answer {
   lastModified    DateTime?
   totalTimeSpent   Int          @default(0)
   scoreAwarded     Int?
-  tabSwitchCount   Int          @default(0)
-  tabSwitchTime    Int          @default(0)
   openedAt         DateTime?
   lastOpenedAt     DateTime?
   closedAt         DateTime?
   activeTimeMs     Int          @default(0)
-  tabSwitchTimeMs  Int          @default(0)
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 }
@@ -174,9 +169,7 @@ model ExamLog {
   eventType       String
   timestamp       DateTime
   duration        Int?
-  durationAway    Int?
   metadata        String?
-  examQuestionId  String?
   createdAt       DateTime     @default(now())
 }
 

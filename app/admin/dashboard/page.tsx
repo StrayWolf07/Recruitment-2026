@@ -3,18 +3,18 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import SubmissionTable from "@/components/admin/SubmissionTable";
-import LogsTable from "@/components/admin/LogsTable";
+import DownloadTab from "@/components/admin/DownloadTab";
 import FilterPanel, { sortSubmissions, type SortColumn, type SortDirection } from "@/components/admin/FilterPanel";
 import GlassCard from "@/components/ui/GlassCard";
 import GlowTabs, { type GlowTab } from "@/components/ui/GlowTabs";
 import GlowTextarea from "@/components/ui/GlowTextarea";
 import NeonButton from "@/components/ui/NeonButton";
 
-type Tab = "submissions" | "logs" | "questions";
+type Tab = "submissions" | "download" | "questions";
 
 const TABS: GlowTab[] = [
   { id: "submissions", label: "Submissions" },
-  { id: "logs", label: "Logs" },
+  { id: "download", label: "Download" },
   { id: "questions", label: "Question Paper" },
 ];
 
@@ -28,7 +28,7 @@ export default function AdminDashboardPage() {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   useEffect(() => {
-    if (tab === "submissions" || tab === "logs") {
+    if (tab === "submissions" || tab === "download") {
       fetch("/api/admin/get-submissions")
         .then((r) => r.json())
         .then(setSubmissions)
@@ -85,14 +85,14 @@ export default function AdminDashboardPage() {
             Submissions
           </button>
           <button
-            onClick={() => setTab("logs")}
+            onClick={() => setTab("download")}
             className={`w-full text-left px-4 py-2 rounded-lg transition-all ${
-              tab === "logs"
+              tab === "download"
                 ? "bg-white/10 text-white border border-white/20"
                 : "text-white/70 hover:bg-white/5 hover:text-white"
             }`}
           >
-            Logs
+            Download
           </button>
           <button
             onClick={() => setTab("questions")}
@@ -129,7 +129,7 @@ export default function AdminDashboardPage() {
                 <SubmissionTable submissions={sortedSubmissions} />
               </>
             )}
-            {tab === "logs" && <LogsTable submissions={sortedSubmissions} />}
+            {tab === "download" && <DownloadTab submissions={sortedSubmissions} />}
             {tab === "questions" && (
               <QuestionPaperTab
                 roles={roles}

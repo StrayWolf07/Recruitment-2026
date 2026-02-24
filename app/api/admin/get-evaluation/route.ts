@@ -26,11 +26,6 @@ export async function GET(request: NextRequest) {
   const roles = await db.role.findMany({ where: { id: { in: roleIds } } });
   const roleMap = Object.fromEntries(roles.map((r) => [r.id, r.name]));
 
-  const logs = session.examLogs ?? [];
-  const returnLogs = logs.filter((l) => l.durationAway != null && l.durationAway >= 0);
-  const totalTabSwitchesFromLogs = returnLogs.length;
-  const totalTimeAwayMsFromLogs = returnLogs.reduce((s, l) => s + (l.durationAway ?? 0), 0);
-
   const answersMap = Object.fromEntries(
     session.answers.map((a) => [
       a.examQuestionId,
@@ -67,8 +62,6 @@ export async function GET(request: NextRequest) {
       endTime: session.endTime.toISOString(),
       submittedAt: session.submittedAt.toISOString(),
       totalExamTimeSec,
-      totalTabSwitches: totalTabSwitchesFromLogs,
-      totalTimeAway: Math.floor(totalTimeAwayMsFromLogs / 1000),
       theoryTabViolation: session.theoryTabViolation ?? false,
       terminationReason: session.terminationReason ?? null,
       terminatedAt: session.terminatedAt?.toISOString() ?? null,

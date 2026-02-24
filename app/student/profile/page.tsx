@@ -50,7 +50,6 @@ export default function StudentProfilePage() {
   const [branch, setBranch] = useState("");
   const [cgpa, setCgpa] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
-  const [hasWorkExperience, setHasWorkExperience] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -138,20 +137,18 @@ export default function StudentProfilePage() {
     if (req(masters, "Masters required")) { setError("Masters required"); return; }
     if (req(pgDiploma, "PG Diploma required")) { setError("PG Diploma required"); return; }
     if (req(additionalQualifications, "Additional qualifications required")) { setError("Additional qualifications required"); return; }
-    if (hasWorkExperience) {
-      if (req(presentOrganization, "Present organization required")) { setError("Present organization required"); return; }
-      if (req(designation, "Designation required")) { setError("Designation required"); return; }
-      if (req(currentJobDetails, "Current job details required")) { setError("Current job details required"); return; }
-      if (req(teamSizeHandled, "Team size handled required")) { setError("Team size handled required"); return; }
-      if (req(reportingTo, "Reporting to required")) { setError("Reporting to required"); return; }
-      if (req(currentMonthlyCTC, "Current monthly CTC required")) { setError("Current monthly CTC required"); return; }
-      if (req(currentAnnualCTC, "Current annual CTC required")) { setError("Current annual CTC required"); return; }
-      if (req(expectedMonthlyCTC, "Expected monthly CTC required")) { setError("Expected monthly CTC required"); return; }
-      if (req(expectedAnnualCTC, "Expected annual CTC required")) { setError("Expected annual CTC required"); return; }
-      if (req(totalExperience, "Total experience required")) { setError("Total experience required"); return; }
-      if (req(noticePeriod, "Notice period required")) { setError("Notice period required"); return; }
-      if (req(reasonsForChange, "Reasons for change required")) { setError("Reasons for change required"); return; }
-    }
+    if (req(presentOrganization, "Present organization required")) { setError("Present organization required"); return; }
+    if (req(designation, "Designation required")) { setError("Designation required"); return; }
+    if (req(currentJobDetails, "Current job details required")) { setError("Current job details required"); return; }
+    if (req(teamSizeHandled, "Team size handled required")) { setError("Team size handled required"); return; }
+    if (req(reportingTo, "Reporting to required")) { setError("Reporting to required"); return; }
+    if (req(currentMonthlyCTC, "Current monthly CTC required")) { setError("Current monthly CTC required"); return; }
+    if (req(currentAnnualCTC, "Current annual CTC required")) { setError("Current annual CTC required"); return; }
+    if (req(expectedMonthlyCTC, "Expected monthly CTC required")) { setError("Expected monthly CTC required"); return; }
+    if (req(expectedAnnualCTC, "Expected annual CTC required")) { setError("Expected annual CTC required"); return; }
+    if (req(totalExperience, "Total experience required")) { setError("Total experience required"); return; }
+    if (req(noticePeriod, "Notice period required")) { setError("Notice period required"); return; }
+    if (req(reasonsForChange, "Reasons for change required")) { setError("Reasons for change required"); return; }
     setError("");
     setLoading(true);
     try {
@@ -183,18 +180,18 @@ export default function StudentProfilePage() {
           masters: masters.trim(),
           pgDiploma: pgDiploma.trim(),
           additionalQualifications: additionalQualifications.trim(),
-          presentOrganization: hasWorkExperience ? presentOrganization.trim() : "",
-          designation: hasWorkExperience ? designation.trim() : "",
-          currentJobDetails: hasWorkExperience ? currentJobDetails.trim() : "",
-          teamSizeHandled: hasWorkExperience ? teamSizeHandled.trim() : "",
-          reportingTo: hasWorkExperience ? reportingTo.trim() : "",
-          currentMonthlyCTC: hasWorkExperience ? currentMonthlyCTC.trim() : "",
-          currentAnnualCTC: hasWorkExperience ? currentAnnualCTC.trim() : "",
-          expectedMonthlyCTC: hasWorkExperience ? expectedMonthlyCTC.trim() : "",
-          expectedAnnualCTC: hasWorkExperience ? expectedAnnualCTC.trim() : "",
-          totalExperience: hasWorkExperience ? totalExperience.trim() : "",
-          noticePeriod: hasWorkExperience ? noticePeriod.trim() : "",
-          reasonsForChange: hasWorkExperience ? reasonsForChange.trim() : "",
+          presentOrganization: presentOrganization.trim(),
+          designation: designation.trim(),
+          currentJobDetails: currentJobDetails.trim(),
+          teamSizeHandled: teamSizeHandled.trim(),
+          reportingTo: reportingTo.trim(),
+          currentMonthlyCTC: currentMonthlyCTC.trim(),
+          currentAnnualCTC: currentAnnualCTC.trim(),
+          expectedMonthlyCTC: expectedMonthlyCTC.trim(),
+          expectedAnnualCTC: expectedAnnualCTC.trim(),
+          totalExperience: totalExperience.trim(),
+          noticePeriod: noticePeriod.trim(),
+          reasonsForChange: reasonsForChange.trim(),
         }),
       });
       const data = await res.json();
@@ -371,20 +368,7 @@ export default function StudentProfilePage() {
             </div>
           </CollapsibleSection>
 
-          <div>
-            <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white/5 transition-colors">
-              <input
-                type="checkbox"
-                checked={hasWorkExperience}
-                onChange={(e) => setHasWorkExperience(e.target.checked)}
-                className="w-4 h-4 rounded border-white/30 bg-white/5 text-primary focus:ring-neonBlue accent-primary"
-              />
-              <span className="text-white/90">Do you have prior work experience?</span>
-            </label>
-          </div>
-
-          {hasWorkExperience && (
-            <CollapsibleSection title="Professional Details" open>
+          <CollapsibleSection title="Professional Details" open>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-white/80 mb-1">Present Organization *</label>
@@ -436,7 +420,6 @@ export default function StudentProfilePage() {
                 </div>
               </div>
             </CollapsibleSection>
-          )}
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <NeonButton type="submit" disabled={loading || roles.length === 0} className="w-full">

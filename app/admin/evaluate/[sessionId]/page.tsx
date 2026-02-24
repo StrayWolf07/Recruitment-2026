@@ -31,8 +31,6 @@ export default function AdminEvaluatePage() {
       cgpa?: number | null;
       roles: string[];
       totalExamTimeSec: number;
-      totalTabSwitches: number;
-      totalTimeAway: number;
       theoryTabViolation?: boolean;
       terminationReason?: string | null;
       terminatedAt?: string | null;
@@ -157,8 +155,6 @@ export default function AdminEvaluatePage() {
           <div><span className="text-white/50">CGPA:</span> <span className="text-neonBlue">{session.cgpa ?? "—"}</span></div>
           <div><span className="text-white/50">Roles:</span> <span className="text-white/90">{session.roles?.join(", ") || "—"}</span></div>
           <div><span className="text-white/50">Total Time:</span> <span className="text-white/90">{formatTime(session.totalExamTimeSec)}</span></div>
-          <div><span className="text-white/50">Total Tab Switches:</span> <span className="text-neonPink">{session.totalTabSwitches}</span></div>
-          <div><span className="text-white/50">Time Away:</span> <span className="text-neonPink">{formatTime(session.totalTimeAway)}</span></div>
           <div><span className="text-white/50">Theory Violation:</span> <span className={session.theoryTabViolation ? "text-red-400 font-medium" : "text-white/90"}>{session.theoryTabViolation ? "Yes" : "No"}</span></div>
           <div><span className="text-white/50">Termination Reason:</span> <span className="text-white/90">{session.terminationReason || "—"}</span></div>
           <div><span className="text-white/50">Terminated Early:</span> <span className="text-white/90">{session.terminatedAt ? "Yes" : "No"}</span></div>

@@ -7,7 +7,6 @@ export type SortColumn =
   | "branch"
   | "cgpa"
   | "roles"
-  | "tabSwitches"
   | "theoryViolation"
   | "terminationReason"
   | "terminatedEarly"
@@ -24,7 +23,6 @@ const SORT_OPTIONS: { value: SortColumn; label: string }[] = [
   { value: "branch", label: "Branch" },
   { value: "cgpa", label: "CGPA" },
   { value: "roles", label: "Roles" },
-  { value: "tabSwitches", label: "Tab Switches" },
   { value: "theoryViolation", label: "Theory Violation" },
   { value: "terminationReason", label: "Termination Reason" },
   { value: "terminatedEarly", label: "Terminated Early" },
@@ -108,10 +106,6 @@ export function sortSubmissions<T extends Record<string, unknown>>(
       case "roles":
         aVal = Array.isArray(a.roles) ? (a.roles as string[]).join(",") : "";
         bVal = Array.isArray(b.roles) ? (b.roles as string[]).join(",") : "";
-        break;
-      case "tabSwitches":
-        aVal = a.totalTabSwitches ?? 0;
-        bVal = b.totalTabSwitches ?? 0;
         break;
       case "theoryViolation":
         aVal = a.theoryTabViolation ? 1 : 0;

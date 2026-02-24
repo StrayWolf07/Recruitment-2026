@@ -5,8 +5,6 @@ export interface ExamSession {
   startTime: string;
   endTime: string;
   submittedAt?: string | null;
-  totalTabSwitches: number;
-  totalTimeAway: number;
 }
 
 export interface ExamQuestion {

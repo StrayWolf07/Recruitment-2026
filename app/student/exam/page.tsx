@@ -477,7 +477,7 @@ export default function StudentExamPage() {
     <div className="min-h-screen p-8 max-w-4xl mx-auto">
       {fullscreenWarning && (
         <GlassCard className="mb-4 p-4 border-amber-400/50 bg-amber-500/10">
-          <p className="text-amber-200 text-sm">You exited fullscreen. This event has been logged.</p>
+          <p className="text-amber-200 text-sm">You exited fullscreen.</p>
         </GlassCard>
       )}
       <div className="flex flex-col lg:flex-row gap-6">

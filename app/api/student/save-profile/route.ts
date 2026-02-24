@@ -111,36 +111,30 @@ export async function POST(request: NextRequest) {
     if (err) return Response.json({ error: err }, { status: 400 });
     err = reqStr(additionalQualifications, "Additional qualifications required");
     if (err) return Response.json({ error: err }, { status: 400 });
-
-    const hasWorkExp = presentOrganization != null && String(presentOrganization).trim() !== "" ||
-      designation != null && String(designation).trim() !== "" ||
-      totalExperience != null && String(totalExperience).trim() !== "";
-    if (hasWorkExp) {
-      err = reqStr(presentOrganization, "Present organization required");
-      if (err) return Response.json({ error: err }, { status: 400 });
-      err = reqStr(designation, "Designation required");
-      if (err) return Response.json({ error: err }, { status: 400 });
-      err = reqStr(currentJobDetails, "Current job details required");
-      if (err) return Response.json({ error: err }, { status: 400 });
-      err = reqStr(teamSizeHandled, "Team size handled required");
-      if (err) return Response.json({ error: err }, { status: 400 });
-      err = reqStr(reportingTo, "Reporting to required");
-      if (err) return Response.json({ error: err }, { status: 400 });
-      err = reqStr(currentMonthlyCTC, "Current monthly CTC required");
-      if (err) return Response.json({ error: err }, { status: 400 });
-      err = reqStr(currentAnnualCTC, "Current annual CTC required");
-      if (err) return Response.json({ error: err }, { status: 400 });
-      err = reqStr(expectedMonthlyCTC, "Expected monthly CTC required");
-      if (err) return Response.json({ error: err }, { status: 400 });
-      err = reqStr(expectedAnnualCTC, "Expected annual CTC required");
-      if (err) return Response.json({ error: err }, { status: 400 });
-      err = reqStr(totalExperience, "Total experience required");
-      if (err) return Response.json({ error: err }, { status: 400 });
-      err = reqStr(noticePeriod, "Notice period required");
-      if (err) return Response.json({ error: err }, { status: 400 });
-      err = reqStr(reasonsForChange, "Reasons for change required");
-      if (err) return Response.json({ error: err }, { status: 400 });
-    }
+    err = reqStr(presentOrganization, "Present organization required");
+    if (err) return Response.json({ error: err }, { status: 400 });
+    err = reqStr(designation, "Designation required");
+    if (err) return Response.json({ error: err }, { status: 400 });
+    err = reqStr(currentJobDetails, "Current job details required");
+    if (err) return Response.json({ error: err }, { status: 400 });
+    err = reqStr(teamSizeHandled, "Team size handled required");
+    if (err) return Response.json({ error: err }, { status: 400 });
+    err = reqStr(reportingTo, "Reporting to required");
+    if (err) return Response.json({ error: err }, { status: 400 });
+    err = reqStr(currentMonthlyCTC, "Current monthly CTC required");
+    if (err) return Response.json({ error: err }, { status: 400 });
+    err = reqStr(currentAnnualCTC, "Current annual CTC required");
+    if (err) return Response.json({ error: err }, { status: 400 });
+    err = reqStr(expectedMonthlyCTC, "Expected monthly CTC required");
+    if (err) return Response.json({ error: err }, { status: 400 });
+    err = reqStr(expectedAnnualCTC, "Expected annual CTC required");
+    if (err) return Response.json({ error: err }, { status: 400 });
+    err = reqStr(totalExperience, "Total experience required");
+    if (err) return Response.json({ error: err }, { status: 400 });
+    err = reqStr(noticePeriod, "Notice period required");
+    if (err) return Response.json({ error: err }, { status: 400 });
+    err = reqStr(reasonsForChange, "Reasons for change required");
+    if (err) return Response.json({ error: err }, { status: 400 });
 
     const validRoles = await db.role.count({
       where: { id: { in: roleIds }, isActive: true },
@@ -187,18 +181,18 @@ export async function POST(request: NextRequest) {
       masters: trim(masters),
       pgDiploma: trim(pgDiploma),
       additionalQualifications: trim(additionalQualifications),
-      presentOrganization: hasWorkExp ? trim(presentOrganization) : null,
-      designation: hasWorkExp ? trim(designation) : null,
-      currentJobDetails: hasWorkExp ? trim(currentJobDetails) : null,
-      teamSizeHandled: hasWorkExp ? trim(teamSizeHandled) : null,
-      reportingTo: hasWorkExp ? trim(reportingTo) : null,
-      currentMonthlyCTC: hasWorkExp ? trim(currentMonthlyCTC) : null,
-      currentAnnualCTC: hasWorkExp ? trim(currentAnnualCTC) : null,
-      expectedMonthlyCTC: hasWorkExp ? trim(expectedMonthlyCTC) : null,
-      expectedAnnualCTC: hasWorkExp ? trim(expectedAnnualCTC) : null,
-      totalExperience: hasWorkExp ? trim(totalExperience) : null,
-      noticePeriod: hasWorkExp ? trim(noticePeriod) : null,
-      reasonsForChange: hasWorkExp ? trim(reasonsForChange) : null,
+      presentOrganization: trim(presentOrganization),
+      designation: trim(designation),
+      currentJobDetails: trim(currentJobDetails),
+      teamSizeHandled: trim(teamSizeHandled),
+      reportingTo: trim(reportingTo),
+      currentMonthlyCTC: trim(currentMonthlyCTC),
+      currentAnnualCTC: trim(currentAnnualCTC),
+      expectedMonthlyCTC: trim(expectedMonthlyCTC),
+      expectedAnnualCTC: trim(expectedAnnualCTC),
+      totalExperience: trim(totalExperience),
+      noticePeriod: trim(noticePeriod),
+      reasonsForChange: trim(reasonsForChange),
     };
 
     await db.student.update({

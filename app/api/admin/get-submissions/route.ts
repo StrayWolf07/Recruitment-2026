@@ -23,8 +23,6 @@ export async function GET() {
     cgpa: s.student.cgpa,
     roles: (JSON.parse(s.roleIds) as string[]).map((rid) => roleMap[rid] ?? rid),
     submittedAt: s.submittedAt!.toISOString(),
-    totalTabSwitches: s.totalTabSwitches,
-    totalTimeAway: s.totalTimeAway,
     theoryTabViolation: s.theoryTabViolation ?? false,
     terminationReason: s.terminationReason ?? null,
     terminatedAt: s.terminatedAt?.toISOString() ?? null,

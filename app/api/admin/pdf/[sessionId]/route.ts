@@ -31,11 +31,6 @@ export async function GET(
     const roles = await db.role.findMany({ where: { id: { in: roleIds } } });
     const roleMap = Object.fromEntries(roles.map((r) => [r.id, r.name]));
 
-    const logs = session.examLogs ?? [];
-    const returnLogs = logs.filter((l) => l.durationAway != null && l.durationAway >= 0);
-    const totalTabSwitchesFromLogs = returnLogs.length;
-    const totalTimeAwayMsFromLogs = returnLogs.reduce((s, l) => s + (l.durationAway ?? 0), 0);
-
     const answersMap = Object.fromEntries(
       session.answers.map((a) => [
         a.examQuestionId,
@@ -76,8 +71,6 @@ export async function GET(
       startTime: session.startTime.toISOString(),
       endTime: session.endTime.toISOString(),
       submittedAt: session.submittedAt.toISOString(),
-      totalTabSwitches: totalTabSwitchesFromLogs,
-      totalTimeAway: Math.floor(totalTimeAwayMsFromLogs / 1000),
       theoryTabViolation: session.theoryTabViolation ?? false,
       terminationReason: session.terminationReason ?? null,
       terminatedAt: session.terminatedAt?.toISOString() ?? null,
@@ -86,10 +79,7 @@ export async function GET(
       blurEvents: session.examLogs.map((l) => ({
         eventType: l.eventType,
         timestamp: l.timestamp.toISOString(),
-        duration:
-          l.durationAway != null
-            ? Math.round(l.durationAway / 1000)
-            : l.duration,
+        duration: l.duration,
       })),
     };
 

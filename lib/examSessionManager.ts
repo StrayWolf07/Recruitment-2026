@@ -58,13 +58,18 @@ export async function submitExam(
   if (session.submittedAt) return { success: false, error: "Exam already submitted" };
 
   const now = new Date();
-  const data: { submittedAt: Date; theoryTabViolation?: boolean; terminationReason?: string; terminatedAt?: Date } = {
-    submittedAt: now,
-  };
+  const data: {
+    submittedAt: Date;
+    theoryTabViolation?: boolean;
+    terminationReason?: string;
+    terminatedAt?: Date;
+    evaluationStatus?: string;
+  } = { submittedAt: now };
   if (options?.theoryTabViolation) {
     data.theoryTabViolation = true;
-    data.terminationReason = options.terminationReason ?? "Tab switched during theory section";
+    data.terminationReason = options.terminationReason ?? "Tab switch during theory section";
     data.terminatedAt = now;
+    data.evaluationStatus = "disqualified";
   }
 
   await db.examSession.update({
