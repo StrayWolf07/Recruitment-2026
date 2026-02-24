@@ -63,13 +63,15 @@ function PracticalUploadPanel({
       e.target.value = "";
       return;
     }
-    const baseUrl = process.env.NEXT_PUBLIC_FILE_STORE_BASE_URL?.replace(/\/$/, "");
+    const rawBase = process.env.NEXT_PUBLIC_FILE_STORE_BASE_URL;
     const uploadToken = process.env.NEXT_PUBLIC_FILE_STORE_UPLOAD_TOKEN;
-    if (!baseUrl || !uploadToken) {
+    if (!rawBase || !uploadToken) {
       setUploadError("Upload not configured");
       e.target.value = "";
       return;
     }
+    const base = rawBase.trim().replace(/\/$/, "");
+    const uploadUrl = `${base}/upload`;
     setUploading(true);
     setUploadProgress(0);
     setUploadError(null);
@@ -77,7 +79,6 @@ function PracticalUploadPanel({
       const formData = new FormData();
       formData.set("file", file);
       const xhr = new XMLHttpRequest();
-      const uploadUrl = `${baseUrl}/upload`;
       await new Promise<void>((resolve, reject) => {
         xhr.upload.addEventListener("progress", (ev) => {
           if (ev.lengthComputable) setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
