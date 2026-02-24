@@ -1,10 +1,14 @@
 import { NextRequest } from "next/server";
-import { createAdminSession, verifyPassword } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { createAdminSession } from "@/lib/auth";
 import { checkAuthRateLimit } from "@/lib/rateLimit";
 
-const ADMIN_USER = process.env.ADMIN_USER;
-const ADMIN_PASS = process.env.ADMIN_PASS;
+export const runtime = "nodejs";
+
+function mustEnv(key: string): string {
+  const value = process.env[key];
+  if (!value) throw new Error(`Missing required env: ${key}`);
+  return value;
+}
 
 export async function POST(request: NextRequest) {
   const rate = checkAuthRateLimit(request);
@@ -15,36 +19,29 @@ export async function POST(request: NextRequest) {
     );
   }
   try {
+    const adminUser = mustEnv("ADMIN_USER");
+    const adminPass = mustEnv("ADMIN_PASS");
+
     const body = await request.json();
-    const { username, email, password } = body;
-    const loginId = (email ?? username)?.trim?.();
-    if (!loginId || !password) {
+    const email = (body.email ?? body.username)?.trim?.();
+    const password = body.password;
+
+    if (!email || !password) {
       return Response.json({ error: "Email and password required" }, { status: 400 });
     }
-    const emailNorm = String(loginId).toLowerCase();
 
-    let ok = false;
-    try {
-      const admin = await db.admin.findUnique({
-        where: { email: emailNorm },
-      });
-      if (admin && (await verifyPassword(password, admin.passwordHash))) {
-        ok = true;
-      }
-    } catch (dbErr) {
-      console.error("Admin DB lookup:", dbErr);
+    const emailNorm = String(email).toLowerCase();
+    if (emailNorm === adminUser.toLowerCase() && password === adminPass) {
+      await createAdminSession();
+      return Response.json({ success: true });
     }
 
-    if (!ok && ADMIN_USER && ADMIN_PASS && (emailNorm === ADMIN_USER.toLowerCase() || loginId === ADMIN_USER)) {
-      if (password === ADMIN_PASS) ok = true;
-    }
-
-    if (!ok) {
-      return Response.json({ error: "Invalid credentials" }, { status: 401 });
-    }
-    await createAdminSession();
-    return Response.json({ success: true });
+    return Response.json({ error: "Invalid credentials" }, { status: 401 });
   } catch (e) {
+    if (e instanceof Error && e.message.startsWith("Missing required env:")) {
+      console.error(e.message);
+      return Response.json({ error: "Server configuration error" }, { status: 500 });
+    }
     console.error(e);
     return Response.json({ error: "Login failed" }, { status: 500 });
   }
