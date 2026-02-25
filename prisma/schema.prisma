@@ -8,6 +8,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum BehaviorRating {
+  VERY_GOOD
+  GOOD
+  AVERAGE
+  POOR
+}
+
 model Student {
   id           String          @id @default(cuid())
   email        String          @unique
@@ -120,12 +127,49 @@ model ExamSession {
   totalScore          Int?
   evaluationStatus  String       @default("pending") // pending | evaluated
   evaluatedAt       DateTime?
+  technicalEligible  Boolean      @default(false)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
   examQuestions     ExamQuestion[]
   answers           Answer[]
   examLogs          ExamLog[]
   practicalFiles    PracticalFile[]
+  technicalInterviewEvaluation TechnicalInterviewEvaluation?
+}
+
+model TechnicalInterviewEvaluation {
+  id                String    @id @default(cuid())
+  sessionId         String    @unique
+  session           ExamSession @relation(fields: [sessionId], references: [id])
+  conductRating     BehaviorRating?
+  conductRemarks    String?
+  disciplineRating  BehaviorRating?
+  disciplineRemarks String?
+  knowledgeRating   BehaviorRating?
+  knowledgeRemarks  String?
+  analysisRating    BehaviorRating?
+  analysisRemarks   String?
+  communicationRating BehaviorRating?
+  communicationRemarks String?
+  maturityRating    BehaviorRating?
+  maturityRemarks   String?
+  reliabilityRating BehaviorRating?
+  reliabilityRemarks String?
+  understandingRating BehaviorRating?
+  understandingRemarks String?
+  attitudeRating    BehaviorRating?
+  attitudeRemarks   String?
+  overallRating     String?
+  furtherAction     String?
+  suggestedRole     String?
+  suggestedProject  String?
+  suggestedLead     String?
+  others            String?
+  interviewerName   String?
+  interviewerPlace  String?
+  interviewDate     DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 }
 
 model ExamQuestion {

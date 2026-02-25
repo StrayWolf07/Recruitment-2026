@@ -132,6 +132,26 @@ export default function AdminEvaluatePage() {
     }
   };
 
+  const handleNextRound = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/set-technical-eligible", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed");
+      router.push("/admin/dashboard");
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to mark for next round");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center p-8"><span className="text-white/70">Loading...</span></div>;
   if (error && !data) return <div className="min-h-screen p-8 text-red-400">{error}</div>;
   if (!data) return <div className="min-h-screen p-8">No data</div>;
@@ -282,13 +302,18 @@ export default function AdminEvaluatePage() {
       </div>
 
       <div className="sticky bottom-4">
-        <GlassCard className="p-4 flex items-center justify-between gap-4">
+        <GlassCard className="p-4 flex items-center justify-between gap-4 flex-wrap">
           <span className="font-display font-bold text-xl">
             Total Score: <span className="text-neonBlue">{totalScore}</span>
           </span>
-          <NeonButton onClick={handleSave} disabled={saving}>
-            {saving ? "Saving..." : "Save Evaluation"}
-          </NeonButton>
+          <span className="flex gap-2">
+            <NeonButton onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save Evaluation"}
+            </NeonButton>
+            <NeonButton variant="secondary" onClick={handleNextRound} disabled={saving}>
+              Next Round
+            </NeonButton>
+          </span>
         </GlassCard>
       </div>
       {error && <p className="mt-4 text-red-400 text-sm">{error}</p>}
