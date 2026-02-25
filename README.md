@@ -59,8 +59,8 @@ Full-stack recruitment exam system with student signup/login, profile, dynamic e
 
 2. **Connect your repo** and configure the service:
 
-   - **Build command:** `npm install && npm run db:generate && npm run build`
-   - **Start command:** `npm run db:migrate:deploy && npm start`
+   - **Build command:** `npx prisma db push && next build` (pushes schema to production DB during deploy so it stays in sync; no migration history required.)
+   - **Start command:** `npm start`
    - **Root directory:** (leave default if app is at repo root)
 
 3. **Environment variables** (Settings → Variables):
@@ -71,13 +71,11 @@ Full-stack recruitment exam system with student signup/login, profile, dynamic e
    - For file uploads: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ENDPOINT`, `R2_PUBLIC_BASE_URL`
    - Optional: `MAX_UPLOAD_BYTES`, `APP_BASE_URL`
 
-4. **Migrations:** The start command runs `npm run db:migrate:deploy` before `npm start`, so the database is migrated on each deploy. For a one-off migration you can run in Railway shell: `npx prisma migrate deploy`.
+4. **Schema sync:** The **Build command** runs `npx prisma db push` before `next build`, so the production DB schema is pushed on each deploy and stays in sync with `schema.prisma` (no migration history required on Railway).
 
-   **Restore table structure after a DB reset:** If you wiped the production database and need the tables back (empty), run:
-   ```bash
-   DATABASE_URL="postgresql://..." npx prisma migrate deploy
-   ```
-   This recreates all tables (Role, TheoryQuestion, PracticalQuestion, ExamSession, ExamQuestion, Answer, ExamLog, PracticalFile, Student, StudentProfile, Admin). Then run `npx prisma db seed` to add minimal data (1 role, 1 admin) if needed.
+   To verify production columns (e.g. that `technicalEligible` exists on `ExamSession`), call **GET** `/api/admin/debug/db-check` after deploy. It returns `{ tableName: "ExamSession", columnNames: [...] }`.
+
+   **Restore table structure after a DB reset:** If you wiped the production database, redeploy (build runs `prisma db push` and recreates tables). Then run `npx prisma db seed` to add minimal data (1 role, 1 admin) if needed.
 
 5. **Health check:** Configure Railway to call `GET /health`. The app responds with `{ status: "ok", db: "connected" }` when the DB is reachable.
 
