@@ -4,9 +4,10 @@ import { startExam } from "@/lib/examSessionManager";
 import { db } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
-  const session = await getStudentSession();
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   try {
+    const session = await getStudentSession();
+    if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
     const profile = await db.studentProfile.findFirst({
       where: { studentId: session.studentId },
       orderBy: { createdAt: "desc" },
@@ -26,18 +27,12 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: result.error }, { status: 400 });
     }
     return Response.json({ sessionId: result.sessionId });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+  } catch (error: unknown) {
     console.error("START EXAM ERROR:", error);
-    if (message.includes("connect") || message.includes("ECONNREFUSED") || message.includes("P1001") || message.includes("P1017")) {
-      return Response.json(
-        { error: "Database unavailable. Please try again or contact support.", message },
-        { status: 503 }
-      );
-    }
-    return Response.json(
-      { error: "Start exam failed. Please try again.", message },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
