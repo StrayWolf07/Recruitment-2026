@@ -73,37 +73,6 @@ export interface StudentInfoPDFData {
   roleNames?: string[];
 }
 
-/** Technical interview evaluation for PDF appendix */
-export interface TechnicalInterviewPDFData {
-  conductRating?: string | null;
-  conductRemarks?: string | null;
-  disciplineRating?: string | null;
-  disciplineRemarks?: string | null;
-  knowledgeRating?: string | null;
-  knowledgeRemarks?: string | null;
-  analysisRating?: string | null;
-  analysisRemarks?: string | null;
-  communicationRating?: string | null;
-  communicationRemarks?: string | null;
-  maturityRating?: string | null;
-  maturityRemarks?: string | null;
-  reliabilityRating?: string | null;
-  reliabilityRemarks?: string | null;
-  understandingRating?: string | null;
-  understandingRemarks?: string | null;
-  attitudeRating?: string | null;
-  attitudeRemarks?: string | null;
-  overallRating?: string | null;
-  furtherAction?: string | null;
-  suggestedRole?: string | null;
-  suggestedProject?: string | null;
-  suggestedLead?: string | null;
-  others?: string | null;
-  interviewerName?: string | null;
-  interviewerPlace?: string | null;
-  interviewDate?: string | null;
-}
-
 /** Questions + answers for "Download Answers" PDF */
 export interface AnswersPDFData {
   studentName?: string | null;
@@ -114,7 +83,6 @@ export interface AnswersPDFData {
     answerText?: string | null;
     attachmentFilenames?: string[];
   }[];
-  technicalInterview?: TechnicalInterviewPDFData | null;
 }
 
 async function createPdfDoc() {
@@ -283,36 +251,6 @@ export async function generateAnswersPDF(data: AnswersPDFData): Promise<Uint8Arr
       addText("Attachments: " + q.attachmentFilenames.join(", "));
     }
     addText("");
-  }
-
-  if (data.technicalInterview) {
-    const t = data.technicalInterview;
-    addText("--- Technical Interview Evaluation ---", { bold: true });
-    addText("");
-    const criteria: { label: string; rating: string | null | undefined; remarks: string | null | undefined }[] = [
-      { label: "Conduct", rating: t.conductRating, remarks: t.conductRemarks },
-      { label: "Discipline", rating: t.disciplineRating, remarks: t.disciplineRemarks },
-      { label: "Knowledge", rating: t.knowledgeRating, remarks: t.knowledgeRemarks },
-      { label: "Analysis", rating: t.analysisRating, remarks: t.analysisRemarks },
-      { label: "Communication", rating: t.communicationRating, remarks: t.communicationRemarks },
-      { label: "Maturity", rating: t.maturityRating, remarks: t.maturityRemarks },
-      { label: "Reliability", rating: t.reliabilityRating, remarks: t.reliabilityRemarks },
-      { label: "Understanding", rating: t.understandingRating, remarks: t.understandingRemarks },
-      { label: "Attitude", rating: t.attitudeRating, remarks: t.attitudeRemarks },
-    ];
-    for (const c of criteria) {
-      addText(`${c.label} | Rating: ${c.rating ?? "—"} | Remarks: ${c.remarks ?? "—"}`);
-    }
-    addText("");
-    addText(`Overall Rating: ${t.overallRating ?? "—"}`);
-    addText(`Further Action: ${t.furtherAction ?? "—"}`);
-    addText(`Suggested Role: ${t.suggestedRole ?? "—"}`);
-    addText(`Suggested Project: ${t.suggestedProject ?? "—"}`);
-    addText(`Suggested Team Lead: ${t.suggestedLead ?? "—"}`);
-    addText(`Others: ${t.others ?? "—"}`);
-    addText(`Interviewer Name: ${t.interviewerName ?? "—"}`);
-    addText(`Place: ${t.interviewerPlace ?? "—"}`);
-    addText(`Date: ${t.interviewDate ?? "—"}`);
   }
 
   return await pdfDoc.save();
